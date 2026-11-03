@@ -1,11 +1,12 @@
 import tkinter as tk
 import tkinter.ttk
 from ui import MainWindow
+from storage import JsonStorage
 
 def main():
     root = tk.Tk()
 
-    app = MainWindow(root)
+    MainWindow(root, JsonStorage())
 
     root.mainloop()
 

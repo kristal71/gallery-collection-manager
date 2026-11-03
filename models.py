@@ -73,7 +73,7 @@ class BaseItem(TimestampMixin, ValidationMixin, ABC):
         self.id = id if id else uuid.uuid4().hex
         self.title = self.validate_non_empty_string(title)
         self.year = self.validate_positive_int(year)
-        super().__init__(**kwargs)
+        super().__init__()
 
     @property
     def age(self) -> int:
@@ -126,12 +126,13 @@ class Painting(BaseItem):
 
     permissible_technique = ["Масло", "Акварель", "Пастель"]
     def __init__(self,  title:str, year:int, artist:str, technique:str, width_cm:float, height_cm:float, estimated_value:float, **kwargs):
-        super().__init__(title=title, year=year, **kwargs)
+
         self.artist = self.validate_non_empty_string(artist)
         self.technique = self.validate_choice(technique, self.permissible_technique)
         self.width_cm = self.validate_positive_float(width_cm)
         self.height_cm = self.validate_positive_float(height_cm)
         self.estimated_value = self.validate_positive_float(estimated_value)
+        super().__init__(title=title, year=year, **kwargs)
 
     @property
     def area(self) -> float:

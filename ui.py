@@ -2,45 +2,140 @@ import tkinter as tk
 import tkinter.ttk as ttk
 
 
+columns = ("id", "title", "year", "artist",
+           "technique_material", "area_density",
+           "estimated_value", "type")
+
+column_titles = {
+    "id": "ID", "title": "Название", "year": "Год",
+    "artist": "Художник",
+    "technique_material": "Техника/Материал",
+    "area_density": "Площадь/Плотность",
+    "estimated_value": "Стоимость", "type": "Тип",
+}
+
+stretch_columns = {"title", "technique_material", "artist"}
+
+def get_value(summary, field) -> int|str:
+    """Возвращает значение поля"""
+
+    synonyms = {"technique_material": ("technique", "material"), "area_density": ("area", "density")}
+    if field in synonyms:
+        for name in synonyms[field]:
+            if name in summary:
+                return summary[name]
+        return "-"
+    return summary.get(field, "-")
+
+def summary_to_row(item) -> tuple[int|str, ...]:
+    """преобразует объект в кортеж данных, готовый для вставки в таблицу"""
+
+    summary = item.get_summary()
+    return tuple(get_value(summary, col) for col in columns)
+
+
 class MainWindow:
-    def __init__(self, root):
+    def __init__(self, root, storage):
         self.root = root
+        self.storage = storage
         self.root.title('Main Window')
-        self.root.geometry('800x400')
+        self.root.geometry('1400x500')
 
-        columns = ('id', 'Name', 'Year', 'Artist', 'Technique/Materials', 'Area/Density', 'Estimated value', 'Type')
-        self.table = ttk.Treeview(self.root, columns=columns, show='headings')
+        self.items= self.storage.load_items()
+        self.visible_items = list(self.items)
+        self.sort_column = None
+        self.sort_reverse = False
 
-        self.table.heading('id', text='ID')
-        self.table.column('id', width=40, minwidth=40, stretch=True, anchor='center')
+        self.create_statusbar()
+        self.create_table()
+        self.build_toolbar()
+        self.refresh()
 
-        self.table.heading('Name', text='Name')
-        self.table.column('Name', width=100, minwidth=80, stretch=True, anchor='center')
 
-        self.table.heading('Year', text='Year')
-        self.table.column('Year', width=60, minwidth=50, stretch=True, anchor='center')
+    def create_statusbar(self) -> None:
+        """Создаёт строку состояния внизу главного окна"""
 
-        self.table.heading('Artist', text='Artist')
-        self.table.column('Artist', width=100, minwidth=80, stretch=True, anchor='center')
+        frame = ttk.Frame(self.root)
+        frame.pack(side = "bottom", fill = "x")
+        self.count_label = ttk.Label(frame, text='Отображено объектов: 0', padding=3)
+        self.count_label.pack(side = "left")
+        self.file_label = ttk.Label(frame, text='Файл: -', padding=3)
+        self.file_label.pack(side  = "right")
 
-        self.table.heading('Technique/Materials', text='Technique/Materials')
-        self.table.column('Technique/Materials', width=150, minwidth=120, stretch=True, anchor='center')
+    def create_table(self) -> None:
+        """Создаёт таблицу Treeviw с пустыми колонками"""
 
-        self.table.heading('Area/Density', text='Area/Density')
-        self.table.column('Area/Density', width=90, minwidth=80, stretch=True, anchor='center')
+        self.table = ttk.Treeview(self.root, columns=columns, show="headings")
+        for col in columns:
+            self.table.heading(col, text=column_titles[col])
+            self.table.column(col, width=100, anchor="center")
 
-        self.table.heading('Estimated value', text='Estimated value')
-        self.table.column('Estimated value', width=110, minwidth=90, stretch=True, anchor='center')
+        for tag, color in {"high": "#ffb3b3", "normal": "#ffffff"}.items():
+            self.table.tag_configure(tag, background=color)
 
-        self.table.heading('Type', text='Type')
-        self.table.column('Type', width=80, minwidth=70, stretch=True, anchor='center')
+        self.table.pack(side="left", fill="both", expand=True)
 
-        tests = [
-            (1, 'name', 'Year', 'Artist', 'Technique/Materials', 'Area/Density', 'Estimated value', 'Type'),
-            (2, 'name', 'Year', 'Artist', 'Technique/Materials', 'Area/Density', 'Estimated value', 'Type')
-        ]
+    def build_toolbar(self) -> None:
+        """Создаёт панель управления с основными кнопками"""
 
-        for test in tests:
-            self.table.insert('', tk.END, values=test)
+        toolbar = ttk.Frame(self.root, padding=5)
+        toolbar.pack(side="top", fill="x")
 
-        self.table.pack(fill=tk.BOTH, expand=True, padx=0, pady=5)
+        for title, command in(
+            ("Добавить", self.add_item),
+            ("Редактировать", self.edit_item),
+            ("Удалить", self.delete_item),
+            ("Открыть файл", self.choose_file),
+        ):
+            ttk.Button(toolbar, text=title,command=command).pack(side="left", padx=3)
+
+        frame = ttk.Frame(self.root, padding=3)
+        frame.pack(side="top", fill="x")
+        ttk.Label(frame, text="Поле: ").pack(side="left")
+
+        self.filter_field = tk.StringVar(value="Название")
+        ttk.Combobox(
+            frame, textvariable=self.filter_field,
+            values = list(column_titles), state="readonly", width=20,
+        ).pack(side="left", padx=5)
+
+        ttk.Label(frame, text="Значение:").pack(side="left")
+        self.filter_value = tk.StringVar()
+        ttk.Entry(frame, textvariable=self.filter_value, width=20).pack(side="left", padx=5)
+
+        ttk.Button(frame, text="Искать", command=self.apply_filter).pack(side="left")
+        ttk.Button(frame, text="Сброс", command=self.reset_filter).pack(side="left", padx=5)
+
+
+    def add_item(self):
+        pass
+
+    def edit_item(self):
+        pass
+
+    def delete_item(self):
+        pass
+
+    def choose_file(self):
+        pass
+
+    def apply_filter(self):
+        pass
+
+    def reset_filter(self):
+        pass
+
+    def refresh(self):
+        """Обновление главного окна программы при любом изменении данных."""
+
+        self.table.delete(*self.table.get_children())
+        for item in self.visible_items:
+            self.table.insert("", "end", iid=str(item.id),
+                              values=summary_to_row(item), tags=(item.get_risk_level(self.items),))
+        total, show = len(self.items), len(self.visible_items)
+        self.count_label.config(text=f"Отображено объектов: {show} из {total}")
+
+        if self.storage.file_existed:
+            self.file_label.config(text=f"Файл: {self.storage.file_path}")
+        else:
+            self.file_label.config(text="Файл не найден. Новый файл будет создан при сохранении")
