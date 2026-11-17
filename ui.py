@@ -72,10 +72,16 @@ class MainWindow:
             self.table.heading(col, text=column_titles[col], command=lambda c=col: self.sort_by(c))
             self.table.column(col, width=100, anchor="center")
 
+            if col in stretch_columns:
+                self.table.column(col, width=150, anchor="w", stretch=True)
+            else:
+                self.table.column(col, width=150, anchor="center", stretch=False)
+
         for tag, color in {"high": "#ffb3b3", "normal": "#ffffff"}.items():
             self.table.tag_configure(tag, background=color)
 
         self.table.pack(side="left", fill="both", expand=True)
+        self.table.bind("<Double-1>", lambda event:self.edit_item())
 
     def create_toolbar(self) -> None:
         """Создаёт панель управления с основными кнопками"""

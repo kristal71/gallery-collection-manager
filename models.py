@@ -73,7 +73,7 @@ class BaseItem(TimestampMixin, ValidationMixin, ABC):
         self.id = id if id else uuid.uuid4().hex
         self.title = self.validate_non_empty_string(title)
         self.year = self.validate_positive_int(year)
-        super().__init__()
+        super().__init__(**kwargs)
 
     @property
     def age(self) -> int:

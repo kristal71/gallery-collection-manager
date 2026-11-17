@@ -10,21 +10,9 @@ class JsonStorage:
         self.file_path = file_path
         self.file_existed = os.path.exists(self.file_path)
 
-    # def load_items(self) -> list[BaseItem]:
-    #     """Загрузка файлов из JSON-файла"""
-    #     if not os.path.exists(self.file_path):
-    #         self.file_existed = False
-    #         return []
-    #
-    #     self.file_existed = True
-    #     try:
-    #         with open(self.file_path, "r", encoding="utf-8") as file:
-    #             raw_data = json.load(file)
-    #             items = [ItemFactory.create_item(item_dict) for item_dict in raw_data]
-    #             return items
-    #     except:
-    #         return []
+
     def load_items(self) -> list[BaseItem]:
+        """Загрузка файлов из JSON-файла"""
         if not os.path.exists(self.file_path):
             self.file_existed = False
             return []
@@ -35,10 +23,8 @@ class JsonStorage:
                 raw_data = json.load(file)
                 items = [ItemFactory.create_item(item_dict) for item_dict in raw_data]
                 return items
-        except Exception as e:
-            print(f"Ошибка при загрузке или парсинге элементов: {e}") # Поможет увидеть проблему в консоли
+        except:
             return []
-
 
     def save_items(self, items:list[BaseItem]) -> None:
         """Записываем итоговый массив словарей в файл"""
